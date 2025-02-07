@@ -1,119 +1,89 @@
 version: 2.1
 
-executors:
-  terraform-executor:
+# Define reusable commands
+commands:
+  terraform_init:
+    description: "Initialize Terraform"
+    steps:
+      - run:
+          name: "Terraform Init"
+          command: terraform init
+
+  terraform_plan:
+    description: "Run Terraform Plan"
+    steps:
+      - run:
+          name: "Terraform Plan"
+          command: terraform plan -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+
+  terraform_apply:
+    description: "Run Terraform Apply"
+    steps:
+      - run:
+          name: "Terraform Apply"
+          command: terraform apply -auto-approve -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+
+  terraform_destroy:
+    description: "Run Terraform Destroy"
+    steps:
+      - run:
+          name: "Terraform Destroy"
+          command: terraform destroy -auto-approve -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+
+# Define jobs
+jobs:
+  plan:
     docker:
       - image: hashicorp/terraform:latest
-    working_directory: ~/project
-
-jobs:
-  setup-environment:
-    executor: terraform-executor
-    parameters:
-      is_backend:
-        type: boolean
-      is_frontend:
-        type: boolean
     steps:
       - checkout
+      - terraform_init
+      - terraform_plan
 
-      - run:
-          name: Extract PR Number
-          command: |
-            if [[ -n "$CIRCLE_PULL_REQUEST" ]]; then
-              PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
-              echo "PR_NUMBER=$PR_NUMBER" >> $BASH_ENV
-              echo "This is a PR: PR Number is $PR_NUMBER"
-            else
-              echo "Not a PR, skipping deployment."
-              circleci step halt
-            fi
-
-      - run:
-          name: Install AWS CLI
-          command: |
-            apk add --no-cache unzip curl
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            ./aws/install
-
-      - run:
-          name: Configure AWS Credentials
-          command: |
-            mkdir -p ~/.aws
-            echo "[default]" > ~/.aws/credentials
-            echo "aws_access_key_id=${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
-            echo "aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
-
-      - run:
-          name: Terraform Init
-          command: terraform init
-
-      - run:
-          name: Terraform Plan
-          command: |
-            terraform plan -var-file=terraform.ephemeral.tfvars \
-              -var="pr_number=$PR_NUMBER" \
-              -var="is_backend=<< parameters.is_backend >>" \
-              -var="is_frontend=<< parameters.is_frontend >>"
-
-      - run:
-          name: Terraform Apply
-          command: |
-            terraform apply -auto-approve -var-file=terraform.ephemeral.tfvars \
-              -var="pr_number=$PR_NUMBER" \
-              -var="is_backend=<< parameters.is_backend >>" \
-              -var="is_frontend=<< parameters.is_frontend >>"
-
-  destroy-environment:
-    executor: terraform-executor
+  apply:
+    docker:
+      - image: hashicorp/terraform:latest
     steps:
       - checkout
+      - terraform_init
+      - terraform_apply
 
-      - run:
-          name: Extract PR Number
-          command: |
-            if [[ -n "$CIRCLE_PULL_REQUEST" ]]; then
-              PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
-              echo "PR_NUMBER=$PR_NUMBER" >> $BASH_ENV
-              echo "Destroying environment for PR $PR_NUMBER"
-            else
-              echo "Not a PR, skipping destroy."
-              circleci step halt
-            fi
+  destroy:
+    docker:
+      - image: hashicorp/terraform:latest
+    steps:
+      - checkout
+      - terraform_init
+      - terraform_destroy
 
-      - run:
-          name: Install AWS CLI
-          command: |
-            apk add --no-cache unzip curl
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            ./aws/install
-
-      - run:
-          name: Terraform Init
-          command: terraform init
-
-      - run:
-          name: Destroy Terraform Resources
-          command: |
-            terraform destroy -auto-approve -var-file=terraform.ephemeral.tfvars \
-              -var="pr_number=$PR_NUMBER"
-
+# Define workflows
 workflows:
   version: 2
-  workflow-pr-open:
+  pr_workflow:
     jobs:
-      - setup-environment:
+      - plan:
+          context: aws-creds # Use a context for AWS credentials
           filters:
             branches:
-              only: /.*/  # Runs on all PR branches
-          is_backend: true
-          is_frontend: false
-
-  workflow-pr-close:
-    jobs:
-      - destroy-environment:
+              ignore: main # Only run on PRs, not on main branch
+      - hold_for_approval:
+          type: approval
+          requires:
+            - plan
           filters:
             branches:
-              ignore: /.*/  # Runs when PR branch is deleted
+              ignore: main # Only run on PRs, not on main branch
+      - apply:
+          requires:
+            - hold_for_approval
+          context: aws-creds
+          filters:
+            branches:
+              ignore: main # Only run on PRs, not on main branch
+  destroy_workflow:
+    jobs:
+      - destroy:
+          context: aws-creds
+          filters:
+            branches:
+              only: main # Only run when merging to main

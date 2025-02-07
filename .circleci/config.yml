@@ -9,7 +9,7 @@ commands:
           name: "Terraform Init"
           command: |
             terraform init \
-              -backend-config="key=ephemeral-environments/pr-${CIRCLE_PULL_REQUEST##*/}/terraform.tfstate"
+              -backend-config="key=ephemeral-environments/pr-${CIRCLE_BUILD_NUM##*/}/terraform.tfstate"
   terraform_plan:
     description: "Run Terraform Plan"
     steps:
@@ -18,7 +18,7 @@ commands:
           command: |
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+              -var="pr_number=${CIRCLE_BUILD_NUM##*/}"
 
   terraform_apply:
     description: "Run Terraform Apply"
@@ -29,7 +29,7 @@ commands:
             terraform apply \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+              -var="pr_number=${CIRCLE_BUILD_NUM##*/}"
 
   terraform_destroy:
     description: "Run Terraform Destroy"
@@ -40,7 +40,7 @@ commands:
             terraform destroy \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+              -var="pr_number=${CIRCLE_BUILD_NUM##*/}"
 
 # Define jobs
 jobs:

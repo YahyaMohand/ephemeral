@@ -99,7 +99,7 @@ workflows:
           context: AWS
           filters:
             branches:
-              only: /pull\/.*/
+              only: main
           is_backend: true
           is_frontend: false
 
@@ -109,4 +109,4 @@ workflows:
           context: AWS
           filters:
             branches:
-              ignore: /pull\/.*/
+              ignore: main

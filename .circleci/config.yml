@@ -15,21 +15,32 @@ commands:
     steps:
       - run:
           name: "Terraform Plan"
-          command: terraform plan -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+          command: |
+            terraform plan \
+              -var-file="terraform.ephemeral.tfvars" \
+              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
 
   terraform_apply:
     description: "Run Terraform Apply"
     steps:
       - run:
           name: "Terraform Apply"
-          command: terraform apply -auto-approve -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+          command: |
+            terraform apply \
+              -auto-approve \
+              -var-file="terraform.ephemeral.tfvars" \
+              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
 
   terraform_destroy:
     description: "Run Terraform Destroy"
     steps:
       - run:
           name: "Terraform Destroy"
-          command: terraform destroy -auto-approve -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+          command: |
+            terraform destroy \
+              -auto-approve \
+              -var-file="terraform.ephemeral.tfvars" \
+              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
 
 # Define jobs
 jobs:

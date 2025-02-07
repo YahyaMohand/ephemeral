@@ -110,4 +110,3 @@ workflows:
           filters:
             branches:
               ignore: /pull\/.*/
-          when: on_close

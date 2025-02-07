@@ -27,8 +27,8 @@ commands:
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_BUILD_NUM##*/}" \
-              -var="is_backend=${<< pipeline.parameters.is_backend >>}" \
-              -var="is_frontend=${<< pipeline.parameters.is_frontend >>}"
+              -var="is_backend=${<< parameters.is_backend >>}" \
+              -var="is_frontend=${<< parameters.is_frontend >>}"
 
   terraform_apply:
     description: "Run Terraform Apply"
@@ -40,8 +40,8 @@ commands:
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_BUILD_NUM##*/}" \
-              -var="is_backend=${<< pipeline.parameters.is_backend >>}" \
-              -var="is_frontend=${<< pipeline.parameters.is_frontend >>}"
+              -var="is_backend=${<< parameters.is_backend >>}" \
+              -var="is_frontend=${<< parameters.is_frontend >>}"
 
   terraform_destroy:
     description: "Run Terraform Destroy"

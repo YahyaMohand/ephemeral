@@ -1,13 +1,5 @@
 version: 2.1
 
-parameters:
-  is_backend:
-    type: boolean
-    default: false
-  is_frontend:
-    type: boolean
-    default: false
-
 # Define reusable commands
 commands:
   terraform_init:
@@ -27,8 +19,7 @@ commands:
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_BUILD_NUM##*/}" \
-              -var="is_backend=${<< parameters.is_backend >>}" \
-              -var="is_frontend=${<< parameters.is_frontend >>}"
+              -var="is_backend=true"
 
   terraform_apply:
     description: "Run Terraform Apply"
@@ -40,9 +31,7 @@ commands:
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_BUILD_NUM##*/}" \
-              -var="is_backend=${<< parameters.is_backend >>}" \
-              -var="is_frontend=${<< parameters.is_frontend >>}"
-
+              -var="is_backend=true"
   terraform_destroy:
     description: "Run Terraform Destroy"
     steps:
@@ -89,8 +78,6 @@ workflows:
           filters:
             branches:
               ignore: main # Only run on PRs, not on main branch
-          is_backend: true
-          is_frontend: false
       - hold_for_approval:
           type: approval
           requires:
@@ -98,8 +85,6 @@ workflows:
           filters:
             branches:
               ignore: main # Only run on PRs, not on main branch
-          is_backend: true
-          is_frontend: false
       - apply:
           requires:
             - hold_for_approval
@@ -107,8 +92,6 @@ workflows:
           filters:
             branches:
               ignore: main # Only run on PRs, not on main branch
-          is_backend: true
-          is_frontend: false
   destroy_workflow:
     jobs:
       - destroy:

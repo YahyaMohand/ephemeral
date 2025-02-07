@@ -1,5 +1,13 @@
 version: 2.1
 
+parameters:
+  is_backend:
+    type: boolean
+    default: false
+  is_frontend:
+    type: boolean
+    default: false
+
 # Define reusable commands
 commands:
   terraform_init:
@@ -18,7 +26,9 @@ commands:
           command: |
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_BUILD_NUM##*/}"
+              -var="pr_number=${CIRCLE_BUILD_NUM##*/}" \
+              -var="is_backend=${<< pipeline.parameters.is_backend >>}" \
+              -var="is_frontend=${<< pipeline.parameters.is_frontend >>}"
 
   terraform_apply:
     description: "Run Terraform Apply"
@@ -29,7 +39,9 @@ commands:
             terraform apply \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_BUILD_NUM##*/}"
+              -var="pr_number=${CIRCLE_BUILD_NUM##*/}" \
+              -var="is_backend=${<< pipeline.parameters.is_backend >>}" \
+              -var="is_frontend=${<< pipeline.parameters.is_frontend >>}"
 
   terraform_destroy:
     description: "Run Terraform Destroy"
@@ -40,8 +52,7 @@ commands:
             terraform destroy \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_BUILD_NUM##*/}"
-
+              -var="pr_number=${CIRCLE_BUILD_NUM##*/}" \
 # Define jobs
 jobs:
   plan:
@@ -79,6 +90,7 @@ workflows:
             branches:
               ignore: main # Only run on PRs, not on main branch
           is_backend: true
+          is_frontend: false
       - hold_for_approval:
           type: approval
           requires:
@@ -87,6 +99,7 @@ workflows:
             branches:
               ignore: main # Only run on PRs, not on main branch
           is_backend: true
+          is_frontend: false
       - apply:
           requires:
             - hold_for_approval
@@ -95,6 +108,7 @@ workflows:
             branches:
               ignore: main # Only run on PRs, not on main branch
           is_backend: true
+          is_frontend: false
   destroy_workflow:
     jobs:
       - destroy:

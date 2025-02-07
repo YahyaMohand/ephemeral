@@ -20,18 +20,22 @@ jobs:
       - run:
           name: Extract PR Number
           command: |
-            echo "Extracting PR number..."
-            PR_NUMBER=$(echo "${CIRCLE_PULL_REQUEST}" | sed 's|.*/pull/||')
-            echo "PR_NUMBER=$PR_NUMBER" >> $BASH_ENV
-            echo "PR Number is $PR_NUMBER"
+            if [[ -n "$CIRCLE_PULL_REQUEST" ]]; then
+              PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
+              echo "PR_NUMBER=$PR_NUMBER" >> $BASH_ENV
+              echo "This is a PR: PR Number is $PR_NUMBER"
+            else
+              echo "Not a PR, skipping deployment."
+              circleci step halt
+            fi
 
       - run:
           name: Install AWS CLI
           command: |
-            apt-get update && apt-get install -y unzip curl
+            apk add --no-cache unzip curl
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
-            sudo ./aws/install
+            ./aws/install
 
       - run:
           name: Configure AWS Credentials
@@ -69,17 +73,22 @@ jobs:
       - run:
           name: Extract PR Number
           command: |
-            PR_NUMBER=$(echo "${CIRCLE_PULL_REQUEST}" | sed 's|.*/pull/||')
-            echo "PR_NUMBER=$PR_NUMBER" >> $BASH_ENV
-            echo "PR Number is $PR_NUMBER"
+            if [[ -n "$CIRCLE_PULL_REQUEST" ]]; then
+              PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | grep -oE '[0-9]+$')
+              echo "PR_NUMBER=$PR_NUMBER" >> $BASH_ENV
+              echo "Destroying environment for PR $PR_NUMBER"
+            else
+              echo "Not a PR, skipping destroy."
+              circleci step halt
+            fi
 
       - run:
-          name: Configure AWS Credentials
+          name: Install AWS CLI
           command: |
-            mkdir -p ~/.aws
-            echo "[default]" > ~/.aws/credentials
-            echo "aws_access_key_id=${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
-            echo "aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
+            apk add --no-cache unzip curl
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install
 
       - run:
           name: Terraform Init
@@ -93,20 +102,18 @@ jobs:
 
 workflows:
   version: 2
-  pr-deployment:
+  workflow-pr-open:
     jobs:
       - setup-environment:
-          context: AWS
           filters:
             branches:
-              only: main
+              only: /.*/  # Runs on all PR branches
           is_backend: true
           is_frontend: false
 
+  workflow-pr-close:
+    jobs:
       - destroy-environment:
-          requires:
-            - setup-environment
-          context: AWS
           filters:
             branches:
-              ignore: main
+              ignore: /.*/  # Runs when PR branch is deleted

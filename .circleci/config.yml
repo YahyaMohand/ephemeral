@@ -78,6 +78,7 @@ workflows:
           filters:
             branches:
               ignore: main # Only run on PRs, not on main branch
+          is_backend: true
       - hold_for_approval:
           type: approval
           requires:
@@ -85,6 +86,7 @@ workflows:
           filters:
             branches:
               ignore: main # Only run on PRs, not on main branch
+          is_backend: true
       - apply:
           requires:
             - hold_for_approval
@@ -92,6 +94,7 @@ workflows:
           filters:
             branches:
               ignore: main # Only run on PRs, not on main branch
+          is_backend: true
   destroy_workflow:
     jobs:
       - destroy:

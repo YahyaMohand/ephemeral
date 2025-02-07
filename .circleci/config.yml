@@ -7,7 +7,7 @@ commands:
     steps:
       - run:
           name: "Terraform Init"
-          command: terraform init
+          command: terraform init -var="pr_number=${CIRCLE_PULL_REQUEST##*/}
 
   terraform_plan:
     description: "Run Terraform Plan"

@@ -1,12 +1,15 @@
 version: 2.1
 
-orbs:
-  aws-cli: circleci/aws-cli@3.1
-
 commands:
   terraform_init:
     description: "Initialize Terraform"
     steps:
+      - run:
+          name: "Setup AWS Credentials"
+          command: |
+            echo "export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" >> $BASH_ENV
+            echo "export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> $BASH_ENV
+            source $BASH_ENV
       - run:
           name: "Terraform Init"
           command: |
@@ -47,10 +50,11 @@ jobs:
   plan:
     docker:
       - image: hashicorp/terraform:1.7
+        environment:
+          AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     steps:
       - checkout
-      - aws-cli/setup:
-          profile-name: default
       - terraform_init
       - terraform_plan
       - persist_to_workspace:
@@ -64,21 +68,24 @@ jobs:
   apply:
     docker:
       - image: hashicorp/terraform:1.7
+        environment:
+          AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     steps:
       - checkout
-      - aws-cli/setup:
-          profile-name: default
       - attach_workspace:
           at: .
+      - terraform_init
       - terraform_apply
 
   cleanup:
     docker:
       - image: hashicorp/terraform:1.7
+        environment:
+          AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     steps:
       - checkout
-      - aws-cli/setup:
-          profile-name: default
       - terraform_init
       - terraform_destroy
 

@@ -35,7 +35,7 @@ terraform {
     # dynamodb_table       = "terraform-682033466227"
     bucket               = "terraform-ephemeral-state-bucket"
     workspace_key_prefix = "envs"
-    key                  = "ephemeral-environments/pr-${var.pr_number}/terraform.tfstate"
+    # key                  = "ephemeral-environments/pr-${var.pr_number}/terraform.tfstate"
     acl                  = "bucket-owner-full-control"
     encrypt              = true
   }

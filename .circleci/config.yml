@@ -91,6 +91,7 @@ jobs:
       - terraform_init
       - terraform_destroy
 
+# Define workflows
 workflows:
   version: 2
   terraform_pr:

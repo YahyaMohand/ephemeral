@@ -25,6 +25,7 @@ commands:
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
+              -var="is_backend=true" \
               -out=tfplan
 
   terraform_apply:
@@ -44,7 +45,8 @@ commands:
             terraform destroy \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
+              -var="is_backend=true"
 
 jobs:
   plan:

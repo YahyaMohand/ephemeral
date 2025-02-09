@@ -25,7 +25,6 @@ commands:
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
-              -var="is_backend=true" \
               -out=tfplan
 
   terraform_apply:
@@ -45,8 +44,7 @@ commands:
             terraform destroy \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
-              -var="is_backend=true"
+              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
 
 jobs:
   plan:
@@ -85,43 +83,50 @@ jobs:
       - image: hashicorp/terraform:1.7
         environment:
           AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} 
+          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     steps:
       - checkout
       - terraform_init
       - terraform_destroy
 
-# Define workflows
 workflows:
   version: 2
-  terraform_pr:
+  pr_workflow:
     jobs:
       - plan:
           context: aws-creds
           filters:
             branches:
-              ignore: main
-            
-      - hold_apply:
+              ignore: /main|master/
+          
+      - hold_for_apply:
           type: approval
           requires:
             - plan
           filters:
             branches:
-              ignore: main
+              ignore: /main|master/
             
       - apply:
           requires:
-            - hold_apply
+            - hold_for_apply
           context: aws-creds
           filters:
             branches:
-              ignore: main
-
-      - cleanup:
+              ignore: /main|master/
+            
+      - hold_for_cleanup:
+          type: approval
           requires:
             - apply
+          filters:
+            branches:
+              ignore: /main|master/
+            
+      - cleanup:
+          requires:
+            - hold_for_cleanup
           context: aws-creds
           filters:
             branches:
-              ignore: main
+              ignore: /main|master/

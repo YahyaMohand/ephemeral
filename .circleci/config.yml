@@ -1,6 +1,8 @@
 version: 2.1
 
-# Define reusable commands
+orbs:
+  aws-cli: circleci/aws-cli@3.1
+
 commands:
   terraform_init:
     description: "Initialize Terraform"
@@ -10,6 +12,7 @@ commands:
           command: |
             terraform init \
               -backend-config="key=ephemeral-environments/pr-${CIRCLE_PULL_REQUEST##*/}/terraform.tfstate"
+
   terraform_plan:
     description: "Run Terraform Plan"
     steps:
@@ -19,7 +22,7 @@ commands:
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
-              -var="is_backend=true"
+              -out=tfplan
 
   terraform_apply:
     description: "Run Terraform Apply"
@@ -27,11 +30,8 @@ commands:
       - run:
           name: "Terraform Apply"
           command: |
-            terraform apply \
-              -auto-approve \
-              -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
-              -var="is_backend=true"
+            terraform apply -auto-approve tfplan
+
   terraform_destroy:
     description: "Run Terraform Destroy"
     steps:
@@ -41,61 +41,77 @@ commands:
             terraform destroy \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
-# Define jobs
+              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
+
 jobs:
   plan:
     docker:
-      - image: hashicorp/terraform:latest
+      - image: hashicorp/terraform:1.7
     steps:
       - checkout
+      - aws-cli/setup:
+          profile-name: default
       - terraform_init
       - terraform_plan
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .terraform
+            - tfplan
+            - "*.tf"
+            - "*.tfvars"
 
   apply:
     docker:
-      - image: hashicorp/terraform:latest
+      - image: hashicorp/terraform:1.7
     steps:
       - checkout
-      - terraform_init
+      - aws-cli/setup:
+          profile-name: default
+      - attach_workspace:
+          at: .
       - terraform_apply
 
-  destroy:
+  cleanup:
     docker:
-      - image: hashicorp/terraform:latest
+      - image: hashicorp/terraform:1.7
     steps:
       - checkout
+      - aws-cli/setup:
+          profile-name: default
       - terraform_init
       - terraform_destroy
 
-# Define workflows
 workflows:
   version: 2
-  pr_workflow:
+  terraform_pr:
     jobs:
       - plan:
-          context: aws-creds # Use a context for AWS credentials
+          context: aws-creds
           filters:
             branches:
-              ignore: main # Only run on PRs, not on main branch
-      - hold_for_approval:
+              ignore: main
+            
+      - hold_apply:
           type: approval
           requires:
             - plan
           filters:
             branches:
-              ignore: main # Only run on PRs, not on main branch
+              ignore: main
+            
       - apply:
           requires:
-            - hold_for_approval
+            - hold_apply
           context: aws-creds
           filters:
             branches:
-              ignore: main # Only run on PRs, not on main branch
-  destroy_workflow:
-    jobs:
-      - destroy:
+              ignore: main
+
+      - cleanup:
+          requires:
+            - apply
           context: aws-creds
           filters:
             branches:
-              only: main # Only run when merging to main
+              ignore: main

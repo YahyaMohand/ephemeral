@@ -1,9 +1,5 @@
 resource "aws_route53_delegation_set" "this" {
   reference_name = local.name_prefix
-
-  lifecycle {
-    prevent_destroy = false
-  }
 }
 
 output "delegation_set_name_servers" {

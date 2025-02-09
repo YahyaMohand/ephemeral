@@ -2,10 +2,6 @@ resource "aws_security_group" "lb" {
   name        = format("lb-%s", local.name_prefix)
   description = "public HTTP and HTTPS"
   vpc_id      = module.vpc.vpc_id
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_security_group_rule" "lb_ingress_http" {

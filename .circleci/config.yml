@@ -117,8 +117,6 @@ workflows:
             
       - hold_for_cleanup:
           type: approval
-          requires:
-            - apply
           filters:
             branches:
               ignore: /main|master/

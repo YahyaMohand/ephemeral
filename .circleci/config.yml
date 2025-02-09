@@ -95,31 +95,31 @@ workflows:
   version: 2
   terraform_pr:
     jobs:
-      # - plan:
-      #     context: aws-creds
-      #     filters:
-      #       branches:
-      #         ignore: main
+      - plan:
+          context: aws-creds
+          filters:
+            branches:
+              ignore: main
             
-      # - hold_apply:
-      #     type: approval
-      #     requires:
-      #       - plan
-      #     filters:
-      #       branches:
-      #         ignore: main
+      - hold_apply:
+          type: approval
+          requires:
+            - plan
+          filters:
+            branches:
+              ignore: main
             
-      # - apply:
-      #     requires:
-      #       - hold_apply
-      #     context: aws-creds
-      #     filters:
-      #       branches:
-      #         ignore: main
+      - apply:
+          requires:
+            - hold_apply
+          context: aws-creds
+          filters:
+            branches:
+              ignore: main
 
       - cleanup:
-          # requires:
-          #   - apply
+          requires:
+            - apply
           context: aws-creds
           filters:
             branches:

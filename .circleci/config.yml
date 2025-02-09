@@ -1,10 +1,5 @@
 version: 2.1
 
-parameters:
-  is_pr:
-    type: boolean
-    default: false
-
 commands:
   terraform_init:
     description: "Initialize Terraform"
@@ -97,23 +92,41 @@ jobs:
 workflows:
   version: 2
   pr_workflow:
-    when: << pipeline.parameters.is_pr >>
     jobs:
       - plan:
           context: aws-creds
+          filters:
+            branches:
+              ignore: /main|master/
+          
       - hold_for_apply:
           type: approval
           requires:
             - plan
+          filters:
+            branches:
+              ignore: /main|master/
+            
       - apply:
           requires:
             - hold_for_apply
           context: aws-creds
+          filters:
+            branches:
+              ignore: /main|master/
+            
       - hold_for_cleanup:
           type: approval
           requires:
             - apply
+          filters:
+            branches:
+              ignore: /main|master/
+            
       - cleanup:
           requires:
             - hold_for_cleanup
           context: aws-creds
+          filters:
+            branches:
+              ignore: /main|master/

@@ -1,5 +1,11 @@
 version: 2.1
 
+# Define pipeline parameters to detect PR
+parameters:
+  is_pr:
+    type: boolean
+    default: false
+
 commands:
   terraform_init:
     description: "Initialize Terraform"
@@ -25,7 +31,6 @@ commands:
             terraform plan \
               -var-file="terraform.ephemeral.tfvars" \
               -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
-              -var="is_backend=true" \
               -out=tfplan
 
   terraform_apply:
@@ -45,8 +50,7 @@ commands:
             terraform destroy \
               -auto-approve \
               -var-file="terraform.ephemeral.tfvars" \
-              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}" \
-              -var="is_backend=true"
+              -var="pr_number=${CIRCLE_PULL_REQUEST##*/}"
 
 jobs:
   plan:
@@ -85,43 +89,34 @@ jobs:
       - image: hashicorp/terraform:1.7
         environment:
           AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} 
+          AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     steps:
       - checkout
       - terraform_init
       - terraform_destroy
 
-# Define workflows
 workflows:
   version: 2
-  terraform_pr:
+  pr_workflow:
+    when: << pipeline.parameters.is_pr >>
     jobs:
       - plan:
           context: aws-creds
-          filters:
-            branches:
-              ignore: main
-            
-      - hold_apply:
+      - hold_for_apply:
           type: approval
           requires:
             - plan
-          filters:
-            branches:
-              ignore: main
-            
       - apply:
           requires:
-            - hold_apply
+            - hold_for_apply
           context: aws-creds
-          filters:
-            branches:
-              ignore: main
-
-      - cleanup:
+      - hold_for_cleanup:
+          type: approval
           requires:
             - apply
+      - cleanup:
+          requires:
+            - hold_for_cleanup
           context: aws-creds
-          filters:
-            branches:
-              ignore: main
+
+# Add this file as .circleci/config.yml and create a .circleci/continue_config.yml with:

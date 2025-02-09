@@ -1,0 +1,38 @@
+version: 2.1
+
+parameters:
+  is_pr:
+    type: boolean
+    default: false
+
+setup: true
+
+orbs:
+  continuation: circleci/continuation@0.1.2
+  path-filtering: circleci/path-filtering@0.1.3
+
+jobs:
+  check_pr:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: "Check if PR"
+          command: |
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              echo "This is a PR build"
+              echo "export IS_PR=true" >> $BASH_ENV
+            else
+              echo "This is not a PR build"
+              echo "export IS_PR=false" >> $BASH_ENV
+            fi
+      - continuation/continue:
+          configuration_path: .circleci/config.yml
+          parameters: '{"is_pr": true}'
+          when: << pipeline.parameters.is_pr >>
+
+workflows:
+  setup:
+    jobs:
+      - check_pr

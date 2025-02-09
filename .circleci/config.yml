@@ -118,5 +118,3 @@ workflows:
           requires:
             - hold_for_cleanup
           context: aws-creds
-
-# Add this file as .circleci/config.yml and create a .circleci/continue_config.yml with:

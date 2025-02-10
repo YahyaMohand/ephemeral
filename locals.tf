@@ -9,12 +9,12 @@ locals {
   vpc_azs = ["me-south-1a", "me-south-1b"]
 
   domains = {
-    internal               = format("%s.digitalzone.com", local.environment)
+    internal               = format("%s.eph.digitalzone-dev.net", local.environment)
     external_domain        = var.external_domain
 
-    external_domain = "pr-${var.pr_number}.digitalzone.com"
-    be_domain      = "be.pr-${var.pr_number}.digitalzone.com"
-    fe_domain      = "fe.pr-${var.pr_number}.digitalzone.com"  
+    external_domain = "pr-${var.pr_number}.eph.digitalzone-dev.net"
+    be_domain      = "be.pr-${var.pr_number}.eph.digitalzone-dev.net"
+    fe_domain      = "fe.pr-${var.pr_number}.eph.digitalzone-dev.net"  
  
     }
 

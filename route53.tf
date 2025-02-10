@@ -16,7 +16,7 @@ resource "aws_route53_record" "be_A" {
   count = var.is_backend ? 1 : 0
   # zone_id = aws_route53_zone.this.id
   zone_id = "Z03930471YQKY02R5MBUA"  
-  name    = "backend.pr-${var.pr_number}" 
+  name    = "be.pr-${var.pr_number}" 
   type    = "A"
 
   alias {
@@ -31,7 +31,7 @@ resource "aws_route53_record" "fe_A" {
   count = var.is_frontend ? 1 : 0
   # zone_id = aws_route53_zone.this.id
   zone_id = "Z03930471YQKY02R5MBUA"  
-  name    = "frontend.pr-${var.pr_number}" 
+  name    = "fe.pr-${var.pr_number}" 
   type    = "A"
 
   alias {

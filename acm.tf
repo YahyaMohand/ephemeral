@@ -4,7 +4,7 @@ module "acm" {
   version = "~> 3.0"
 
   domain_name = local.domains.external_domain
-  zone_id     = "Z044965JQIIKFG"
+  zone_id     = "Z03930471YQKY02R5MBUA"
 
   subject_alternative_names = concat(
     var.is_backend ? [local.domains.be_domain] : [],

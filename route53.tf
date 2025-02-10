@@ -15,7 +15,7 @@ output "delegation_set_name_servers" {
 resource "aws_route53_record" "be_A" {
   count = var.is_backend ? 1 : 0
   # zone_id = aws_route53_zone.this.id
-  zone_id = "Z044965JQIIKFG"  
+  zone_id = "Z03930471YQKY02R5MBUA"  
   name    = "backend.pr-${var.pr_number}" 
   type    = "A"
 
@@ -30,7 +30,7 @@ resource "aws_route53_record" "be_A" {
 resource "aws_route53_record" "fe_A" {
   count = var.is_frontend ? 1 : 0
   # zone_id = aws_route53_zone.this.id
-  zone_id = "Z0444624IIKFG"  
+  zone_id = "Z03930471YQKY02R5MBUA"  
   name    = "frontend.pr-${var.pr_number}" 
   type    = "A"
 
@@ -43,7 +43,7 @@ resource "aws_route53_record" "fe_A" {
 
 resource "aws_route53_record" "lb_A" {
   # zone_id = aws_route53_zone.this.id
-  zone_id = "Z0444624W5965JQIIKFG"  
+  zone_id = "Z03930471YQKY02R5MBUA"  
   name    = "lb"
   type    = "A"
 
